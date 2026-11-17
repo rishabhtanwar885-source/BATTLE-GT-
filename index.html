@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>INDIA BATTLE</title>
+    <meta name="description" content="Esports tournament and gaming contest platform with Ongoing, Upcoming, and Completed match tracking." />
+    <meta property="og:title" content="INDIA BATTLE" />
+    <meta property="og:description" content="Esports tournament and gaming contest platform with Ongoing, Upcoming, and Completed match tracking." />
+    <meta property="og:type" content="website" />
 
     <!-- Icons and Modern Font -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -74,6 +78,32 @@
         .game-card-new:active { transform: scale(0.95); }
         .game-card-new-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, transparent 60%); display: flex; align-items: flex-end; padding: 10px 8px; pointer-events: none;}
         .game-card-new-overlay span { color: white; font-weight: 800; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-align: center; }
+
+        /* MY CONTESTS 3-CARD GRID (ONGOING / UPCOMING / RESULTS) */
+        .my-contests-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 22px; }
+        .contest-status-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            padding: 18px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: var(--glow-shadow);
+            position: relative;
+            text-align: center;
+            user-select: none;
+        }
+        .contest-status-card:active { transform: scale(0.95); }
+        .contest-status-card i { font-size: 1.55rem; line-height: 1; }
+        .contest-status-card .contest-card-label { font-size: 0.85rem; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+        .contest-status-card.ongoing-card i { color: #ef4444; filter: drop-shadow(0 0 6px rgba(239, 68, 68, 0.45)); }
+        .contest-status-card.upcoming-card i { color: #facc15; filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.45)); }
+        .contest-status-card.completed-card i { color: #22c55e; filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.45)); }
 
         .modes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         .mode-card { border-radius: var(--radius-md); background-size: cover; background-position: center; position: relative; overflow: hidden; border: 1px solid var(--border-glass); cursor: pointer; transition: transform 0.2s; box-shadow: var(--glow-shadow); aspect-ratio: 16/9; }
@@ -301,7 +331,7 @@
             document.body.className = savedTheme;
         })();
     </script>
-</head>
+<script src="/_aistudio-iframe.js?v=29045eb3"></script></head>
 
 <body class="theme-neon">
     <!-- Global Notifications & UI Helpers -->
@@ -336,7 +366,6 @@
     <main class="main-content">
         <!-- LOGIN / SIGNUP -->
         <section id="login-section" class="section active">
-            <!-- Cleaned up Login Header Area -->
             <div class="text-center mb-4 pt-4">
                 <img src="https://via.placeholder.com/100/18181b/06b6d4?text=LOGO" class="app-logo-img" style="width: 80px; height: 80px; object-fit: cover; border-radius: 16px; margin-bottom: 16px; box-shadow: var(--glow-shadow);">
                 <h2 class="fw-bold m-0 text-gradient"><span data-i18n="welcome_to">Welcome to</span> <span class="app-name-text">MrBattleZone</span></h2>
@@ -377,14 +406,41 @@
                 <div id="promoSliderTrack" style="display:flex; transition: transform 0.5s ease; height: 180px;"></div>
             </div>
 
+            <!-- MY CONTESTS (ONGOING / UPCOMING / RESULTS CARDS) -->
+            <h2 class="section-title"><i class="bi bi-shield-check glow-text" style="color: var(--accent-cyan);"></i> <span data-i18n="my_contests">My Contests</span></h2>
+            <div class="my-contests-grid" id="myContestsQuickGrid">
+                <div class="contest-status-card ongoing-card" data-contest-status="ongoing" role="button" tabindex="0">
+                    <i class="bi bi-broadcast"></i>
+                    <span class="contest-card-label" data-i18n="ongoing">Ongoing</span>
+                </div>
+                <div class="contest-status-card upcoming-card" data-contest-status="upcoming" role="button" tabindex="0">
+                    <i class="bi bi-clock-fill"></i>
+                    <span class="contest-card-label" data-i18n="upcoming">Upcoming</span>
+                </div>
+                <div class="contest-status-card completed-card" data-contest-status="completed" role="button" tabindex="0">
+                    <i class="bi bi-trophy-fill"></i>
+                    <span class="contest-card-label" data-i18n="results">Results</span>
+                </div>
+            </div>
+
             <h2 class="section-title"><i class="bi bi-lightning-charge-fill" style="color: var(--accent-gold); filter: drop-shadow(0 0 5px var(--accent-gold));"></i> <span data-i18n="top_games">Top Games</span></h2>
             <div class="games-grid mb-4 placeholder-glow" id="gamesListEl">
                 <div class="game-card-new placeholder"></div><div class="game-card-new placeholder"></div><div class="game-card-new placeholder"></div>
             </div>
+        </section>
 
-            <h2 class="section-title"><i class="bi bi-shield-check glow-text" style="color: var(--accent-cyan);"></i> <span data-i18n="my_contests">My Contests</span></h2>
-            <div id="myContestsListEl" class="placeholder-glow"><div class="glass-card placeholder-glow p-0"><span class="placeholder col-12" style="height: 150px;"></span></div></div>
-            <p id="noContestsMessageEl" class="text-muted text-center small fw-bold mt-3" style="display: none;" data-i18n="no_joined_matches">No upcoming matches joined.</p>
+        <!-- MY CONTESTS FILTERED SECTION -->
+        <section id="my-contests-section" class="section">
+            <div class="tournament-tabs" id="myContestsTabsEl">
+                <button class="tab-item active" data-status="ongoing" data-i18n="ongoing">Ongoing</button>
+                <button class="tab-item" data-status="upcoming" data-i18n="upcoming">Upcoming</button>
+                <button class="tab-item" data-status="completed" data-i18n="results">Results</button>
+            </div>
+            <div id="myContestsListEl" class="placeholder-glow"></div>
+            <div id="noContestsMessageEl" class="text-center py-5" style="display: none;">
+                <i class="bi bi-emoji-frown text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted fw-bold mt-2" id="noContestsTextEl" data-i18n="no_joined_matches">No matches joined.</p>
+            </div>
         </section>
 
         <!-- MODES SECTION -->
@@ -466,7 +522,7 @@
         
         <!-- TOURNAMENTS -->
         <section id="tournaments-section" class="section">
-            <div class="tournament-tabs"> 
+            <div class="tournament-tabs" id="tournamentsTabsEl"> 
                 <button class="tab-item active" data-status="upcoming" data-i18n="upcoming">Upcoming</button> 
                 <button class="tab-item" data-status="ongoing" data-i18n="ongoing">Ongoing</button> 
                 <button class="tab-item" data-status="completed" data-i18n="results">Results</button> 
@@ -575,7 +631,7 @@
                 </div>
                 <h3 class="fw-bold m-0 mt-2 mb-1 placeholder-glow"><span class="placeholder col-6" id="profileNameEl"></span></h3>
                 <p class="text-muted small mb-0 placeholder-glow"><span class="placeholder col-8" id="profileEmailEl"></span></p>
-                <div class="d-none" id="profileUidEl"></div> <!-- Hidden securely -->
+                <div class="d-none" id="profileUidEl"></div>
                 <p class="text-info font-monospace small mb-4 mt-1" style="font-size: 0.8rem;"><span id="profileRefCodeEl" style="background: rgba(6, 182, 212, 0.1); padding: 4px 10px; border-radius: 8px; border: 1px solid var(--accent-cyan);"></span></p>
                 
                 <div class="row g-2 profile-stats-grid placeholder-glow mb-4" id="profileStatsGridContainer">
@@ -656,7 +712,7 @@
         <div class="notification-header">
             <button id="closeNotification"><i class="bi bi-arrow-left-short glow-text" style="font-size: 2rem;"></i></button>
             <h3>Notifications</h3>
-            <div style="width: 32px;"></div> <!-- Spacer to keep title centered -->
+            <div style="width: 32px;"></div>
         </div>
         <div id="notificationsListEl" class="notification-list"></div>
         <p id="notificationsEmptyMsgEl" class="text-center text-muted py-5 fw-bold" style="display: none; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%;">No Notifications Available</p>
@@ -712,6 +768,7 @@
 
         let currentUser = null, userProfile = {}, currentSectionId = 'login-section', appSettings = {};
         let currentTournamentGameId = null, currentTournamentModeId = null;
+        let currentMyContestStatus = 'ongoing';
         let allGames = {};
         let allModes = {};
         let allTournamentsData = {}; 
@@ -782,8 +839,8 @@
 
         // ================= TRANSLATION SYSTEM =================
         const translations = {
-            en: { home: "Home", wallet: "Wallet", rank: "Rank", stats: "Stats", profile: "Profile", matches: "Matches", support: "Support", welcome_to: "Welcome to", play_compete_win: "Play. Compete. Win Cash.", email_addr: "Email Address", password: "Password", secure_login: "Secure Login", create_account: "Create New Account", in_game_name: "In-Game Name", invite_code_opt: "Invite Code (Optional)", register_acc: "Register Account", back_login: "Back to Login", top_games: "Top Games", my_contests: "My Contests", no_joined_matches: "No upcoming matches joined.", upcoming: "Upcoming", ongoing: "Ongoing", results: "Results", no_matches_sched: "No matches scheduled.", total_balance: "Total Balance", deposit: "Deposit", withdraw: "Withdraw", winnings: "Winnings", bonus: "Bonus", redeem_code: "Redeem Code", apply: "Apply", txn_history: "History", add_funds: "Add Funds", next_step: "Next Step", select_pay_mode: "Select Payment Mode", proceed_pay: "Proceed to Pay", manual_pay: "Manual Payment", verify_transfer: "Verify Transfer", earned: "Earned", wins: "Wins", apply_coupon: "Apply Promo Coupon", match_history: "Match History", app_tutorial: "App Tutorials", refer_earn: "Refer & Earn", settings: "Settings", help_support: "Help & Support", rules_policies: "Rules & Policies", logout: "Secure Logout", no_tutorials: "No tutorials available.", language: "Language", select_theme: "Select Premium Theme", use_admin_theme: "Use Admin Theme", hall_fame: "Hall of Fame", match_earn: "Match Earnings", refer_reward: "Referral Rewards", loading: "Loading...", select_mode: "Select Mode" },
-            hi: { home: "होम", wallet: "वॉलेट", rank: "रैंक", stats: "आंकड़े", profile: "प्रोफ़ाइल", matches: "मैच", support: "सहायता", welcome_to: "स्वागत है", play_compete_win: "खेलें। मुकाबला करें। जीतें।", email_addr: "ईमेल पता", password: "पासवर्ड", secure_login: "लॉगिन करें", create_account: "नया खाता बनाएँ", in_game_name: "गेम का नाम", invite_code_opt: "इनवाइट कोड (वैकल्पिक)", register_acc: "खाता बनाएँ", back_login: "लॉगिन पर वापस", top_games: "शीर्ष खेल", my_contests: "मेरे मैच", no_joined_matches: "कोई मैच नहीं जोड़ा गया।", upcoming: "आगामी", ongoing: "चल रहे", results: "परिणाम", no_matches_sched: "कोई मैच निर्धारित नहीं है।", total_balance: "कुल राशि", deposit: "जमा करें", withdraw: "निकासी", winnings: "जीती राशि", bonus: "बोनस", redeem_code: "रिडीम कोड", apply: "लागू करें", txn_history: "इतिहास", add_funds: "पैसे जोड़ें", next_step: "अगला कदम", select_pay_mode: "भुगतान का तरीका", proceed_pay: "भुगतान करें", manual_pay: "मैनुअल भुगतान", verify_transfer: "ट्रांसफर सत्यापित करें", earned: "कमाई", wins: "जीत", apply_coupon: "कूपन लगायें", match_history: "मैच का इतिहास", app_tutorial: "ऐप ट्यूटोरियल", refer_earn: "रेफर और कमाएं", settings: "सेटिंग्स", help_support: "सहायता", rules_policies: "नियम और नीतियां", logout: "लॉगआउट", no_tutorials: "कोई ट्यूटोरियल उपलब्ध नहीं।", language: "भाषा", select_theme: "प्रीमियम थीम चुनें", use_admin_theme: "एडमिन थीम लागू करें", hall_fame: "हॉल ऑफ फेम", match_earn: "मैच की कमाई", refer_reward: "रेफरल इनाम", loading: "लोड हो रहा है...", select_mode: "मोड चुनें" }
+            en: { home: "Home", wallet: "Wallet", rank: "Rank", stats: "Stats", profile: "Profile", matches: "Matches", support: "Support", welcome_to: "Welcome to", play_compete_win: "Play. Compete. Win Cash.", email_addr: "Email Address", password: "Password", secure_login: "Secure Login", create_account: "Create New Account", in_game_name: "In-Game Name", invite_code_opt: "Invite Code (Optional)", register_acc: "Register Account", back_login: "Back to Login", top_games: "Top Games", my_contests: "My Contests", no_joined_matches: "No matches joined.", no_ongoing_matches: "No ongoing matches joined.", no_upcoming_matches: "No upcoming matches joined.", no_completed_matches: "No completed matches found.", upcoming: "Upcoming", ongoing: "Ongoing", results: "Results", no_matches_sched: "No matches scheduled.", total_balance: "Total Balance", deposit: "Deposit", withdraw: "Withdraw", winnings: "Winnings", bonus: "Bonus", redeem_code: "Redeem Code", apply: "Apply", txn_history: "History", add_funds: "Add Funds", next_step: "Next Step", select_pay_mode: "Select Payment Mode", proceed_pay: "Proceed to Pay", manual_pay: "Manual Payment", verify_transfer: "Verify Transfer", earned: "Earned", wins: "Wins", apply_coupon: "Apply Promo Coupon", match_history: "Match History", app_tutorial: "App Tutorials", refer_earn: "Refer & Earn", settings: "Settings", help_support: "Help & Support", rules_policies: "Rules & Policies", logout: "Secure Logout", no_tutorials: "No tutorials available.", language: "Language", select_theme: "Select Premium Theme", use_admin_theme: "Use Admin Theme", hall_fame: "Hall of Fame", match_earn: "Match Earnings", refer_reward: "Referral Rewards", loading: "Loading...", select_mode: "Select Mode" },
+            hi: { home: "होम", wallet: "वॉलेट", rank: "रैंक", stats: "आंकड़े", profile: "प्रोफ़ाइल", matches: "मैच", support: "सहायता", welcome_to: "स्वागत है", play_compete_win: "खेलें। मुकाबला करें। जीतें।", email_addr: "ईमेल पता", password: "पासवर्ड", secure_login: "लॉगिन करें", create_account: "नया खाता बनाएँ", in_game_name: "गेम का नाम", invite_code_opt: "इनवाइट कोड (वैकल्पिक)", register_acc: "खाता बनाएँ", back_login: "लॉगिन पर वापस", top_games: "शीर्ष खेल", my_contests: "मेरे मैच", no_joined_matches: "कोई मैच नहीं जोड़ा गया।", no_ongoing_matches: "कोई चल रहा मैच नहीं है।", no_upcoming_matches: "कोई आगामी मैच नहीं जोड़ा गया।", no_completed_matches: "कोई पूरा हुआ मैच नहीं है।", upcoming: "आगामी", ongoing: "चल रहे", results: "परिणाम", no_matches_sched: "कोई मैच निर्धारित नहीं है।", total_balance: "कुल राशि", deposit: "जमा करें", withdraw: "निकासी", winnings: "जीती राशि", bonus: "बोनस", redeem_code: "रिडीम कोड", apply: "लागू करें", txn_history: "इतिहास", add_funds: "पैसे जोड़ें", next_step: "अगला कदम", select_pay_mode: "भुगतान का तरीका", proceed_pay: "भुगतान करें", manual_pay: "मैनुअल भुगतान", verify_transfer: "ट्रांसफर सत्यापित करें", earned: "कमाई", wins: "जीत", apply_coupon: "कूपन लगायें", match_history: "मैच का इतिहास", app_tutorial: "ऐप ट्यूटोरियल", refer_earn: "रेफर और कमाएं", settings: "सेटिंग्स", help_support: "सहायता", rules_policies: "नियम और नीतियां", logout: "लॉगआउट", no_tutorials: "कोई ट्यूटोरियल उपलब्ध नहीं।", language: "भाषा", select_theme: "प्रीमियम थीम चुनें", use_admin_theme: "एडमिन थीम लागू करें", hall_fame: "हॉल ऑफ फेम", match_earn: "मैच की कमाई", refer_reward: "रेफरल इनाम", loading: "लोड हो रहा है...", select_mode: "मोड चुनें" }
         };
 
         function changeLanguage(lang) {
@@ -954,14 +1011,40 @@
                 });
             }
 
+            // My Contests 3-card click handlers (Ongoing / Upcoming / Results)
+            document.querySelectorAll('#myContestsQuickGrid .contest-status-card').forEach(card => {
+                const openStatus = () => {
+                    const status = card.dataset.contestStatus || 'ongoing';
+                    openMyContestsWithStatus(status);
+                };
+                card.addEventListener('click', openStatus);
+                card.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openStatus();
+                    }
+                });
+            });
+
+            // My Contests section tabs
+            document.querySelectorAll('#myContestsTabsEl .tab-item').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    const status = e.currentTarget.dataset.status || 'ongoing';
+                    setActiveMyContestsTab(status);
+                    loadMyContests(status);
+                });
+            });
+
             getEl('notificationBtnEl').onclick = (e) => { e.preventDefault(); e.stopPropagation(); document.getElementById("notificationOverlay").classList.add("show"); if (window.renderNotificationsList) window.renderNotificationsList(); };
             getEl('closeNotification').onclick = (e) => { e.preventDefault(); document.getElementById("notificationOverlay").classList.remove("show"); };
 
-            ZapUPI.setPaymentCallbacks({
-                onSuccess: function(orderId) { verifyAndCreditZapUPI(orderId); },
-                onFailed: function(orderId) { showToast("Payment Failed. Order: " + orderId, "error"); showSection('wallet-section'); },
-                onTimeout: function(orderId) { showToast("Payment Timed Out. Order: " + orderId, "error"); showSection('wallet-section'); }
-            });
+            if (typeof ZapUPI !== 'undefined' && typeof ZapUPI.setPaymentCallbacks === 'function') {
+                ZapUPI.setPaymentCallbacks({
+                    onSuccess: function(orderId) { verifyAndCreditZapUPI(orderId); },
+                    onFailed: function(orderId) { showToast("Payment Failed. Order: " + orderId, "error"); showSection('wallet-section'); },
+                    onTimeout: function(orderId) { showToast("Payment Timed Out. Order: " + orderId, "error"); showSection('wallet-section'); }
+                });
+            }
 
             listenToAppSettings();
             listenToThemeSettings();
@@ -970,7 +1053,20 @@
             listenToGamesAndModes();
         });
 
+        function setActiveMyContestsTab(status) {
+            currentMyContestStatus = status;
+            document.querySelectorAll('#myContestsTabsEl .tab-item').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.status === status);
+            });
+        }
+
+        function openMyContestsWithStatus(status) {
+            setActiveMyContestsTab(status);
+            showSection('my-contests-section', 'home-section');
+        }
+
         async function verifyAndCreditZapUPI(orderId) {
+            if (typeof ZapUPI === 'undefined') return showToast("Payment SDK unavailable", "error");
             showLoader(true);
             try {
                 const zapKey = appSettings?.payment?.zap_key;
@@ -994,12 +1090,12 @@
                         } catch(e) { showToast("Server update failed.", "error"); }
                         showLoader(false);
                     },
-                    onError: function(err) { showLoader(false); showToast("Verification Failed.", "error"); }
+                    onError: function() { showLoader(false); showToast("Verification Failed.", "error"); }
                 });
             } catch(e) { showLoader(false); showToast(e.message, "error"); }
         }
 
-        const showLoader = (show) => { document.getElementById('globalLoaderEl').style.display = show ? 'flex' : 'none'; };
+        const showLoader = (show) => { const el = document.getElementById('globalLoaderEl'); if(el) el.style.display = show ? 'flex' : 'none'; };
         const formatDate = (ts) => ts ? new Date(ts).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour:'numeric', minute:'2-digit', hour12:true }) : 'N/A';
         function getTimeRemaining(startTime) { const diff = startTime - Date.now(); if (diff <= 0) return 'Live Now'; const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000), m = Math.floor((diff%3600000)/60000); return `${d>0?d+'d ':''}${h>0||d>0?h+'h ':''}${m}m`; }
 
@@ -1034,7 +1130,7 @@
             
             document.querySelectorAll('.bottom-nav .nav-item').forEach(item => item.classList.toggle('active', item.dataset.section === sectionId));
             
-            const showBack =['tournaments-section', 'modes-section', 'recharge-section', 'support-section', 'referral-section', 'policies-section', 'settings-section', 'tutorials-section'].includes(sectionId);
+            const showBack = ['tournaments-section', 'modes-section', 'my-contests-section', 'recharge-section', 'support-section', 'referral-section', 'policies-section', 'settings-section', 'tutorials-section'].includes(sectionId);
             getEl('headerTitleContainerEl').style.display = !showBack ? 'flex' : 'none';
             getEl('headerBackBtnEl').style.display = showBack ? 'inline-block' : 'none';
             
@@ -1047,6 +1143,7 @@
             
             getEl('headerGameTitleEl').style.display = showBack ? 'block' : 'none';
             
+            const activeLang = localStorage.getItem("app_lang") || "en";
             if (sectionId === 'modes-section' && currentTournamentGameId) {
                 const gName = allGames[currentTournamentGameId]?.name || 'GAME MODES';
                 getEl('headerGameTitleEl').innerHTML = `<span style="font-size:1.1rem; font-weight:800; letter-spacing:1px; text-transform:uppercase;" class="text-gradient">${gName}</span>`;
@@ -1056,6 +1153,7 @@
                 const mName = currentTournamentModeId && allModes[currentTournamentModeId]?.name ? allModes[currentTournamentModeId].name : 'Matches';
                 getEl('headerGameTitleEl').innerHTML = `<span style="font-size:0.65rem; color:var(--accent-cyan); display:block; line-height:1;">${gName}</span><span style="font-size:1rem; line-height:1.2; color:var(--text-main); font-weight:700;">${mName}</span>`;
             }
+            else if (sectionId === 'my-contests-section') getEl('headerGameTitleEl').innerHTML = `<span class="text-main fw-bold">${translations[activeLang]?.my_contests || 'My Contests'}</span>`;
             else if (sectionId === 'recharge-section') getEl('headerGameTitleEl').innerHTML = '<span class="text-main fw-bold">Add Funds</span>';
             else if (sectionId === 'support-section') getEl('headerGameTitleEl').innerHTML = '<span class="text-main fw-bold">Support</span>';
             else if (sectionId === 'referral-section') getEl('headerGameTitleEl').innerHTML = '<span class="text-main fw-bold">Refer & Earn</span>';
@@ -1063,10 +1161,14 @@
             else if (sectionId === 'settings-section') getEl('headerGameTitleEl').innerHTML = '<span class="text-main fw-bold">Settings</span>';
             else if (sectionId === 'tutorials-section') { getEl('headerGameTitleEl').innerHTML = '<span class="text-main fw-bold">Tutorials</span>'; loadTutorials(); }
 
-            if(sectionId === 'home-section') { loadGames(); loadMyContests(); }
+            if(sectionId === 'home-section') { loadGames(); }
+            if(sectionId === 'my-contests-section') { loadMyContests(currentMyContestStatus); }
             if(sectionId === 'leaderboard-section') loadLeaderboard();
             if(sectionId === 'modes-section' && currentTournamentGameId) loadModes(currentTournamentGameId);
-            if(sectionId === 'tournaments-section' && currentTournamentGameId) filterTournaments(currentTournamentGameId, currentTournamentModeId, document.querySelector('.tournament-tabs .active').dataset.status);
+            if(sectionId === 'tournaments-section' && currentTournamentGameId) {
+                const activeTab = document.querySelector('#tournamentsTabsEl .active');
+                filterTournaments(currentTournamentGameId, currentTournamentModeId, activeTab ? activeTab.dataset.status : 'upcoming');
+            }
             if(sectionId === 'wallet-section') renderWalletHistory();
             if(sectionId === 'profile-section') fetchUserMatchStats();
             window.scrollTo(0, 0);
@@ -1127,7 +1229,8 @@
                             userProfile.referralCode = newRefCode;
                         }
                         updateUIForUser(); 
-                        setupReferralSystem(); 
+                        setupReferralSystem();
+                        if(currentSectionId === 'my-contests-section') loadMyContests(currentMyContestStatus);
                     } else {
                         const refCode = await generateReferralCode();
                         userProfile = { uid: user.uid, displayName: user.email?.split('@')[0], email: user.email, balance: appSettings.signupBonus ?? 10, winningCash: 0, bonusCash: appSettings.signupBonus ?? 10, joinedTournaments: {}, referralCode: refCode, createdAt: serverTimestamp() };
@@ -1142,8 +1245,11 @@
                     const tRef = ref(db, 'tournaments');
                     const tCallback = onValue(tRef, (snap) => {
                         allTournamentsData = snap.val() || {};
-                        if(currentSectionId === 'home-section') loadMyContests();
-                        if(currentSectionId === 'tournaments-section' && currentTournamentGameId) filterTournaments(currentTournamentGameId, currentTournamentModeId, document.querySelector('.tournament-tabs .active').dataset.status);
+                        if(currentSectionId === 'my-contests-section') loadMyContests(currentMyContestStatus);
+                        if(currentSectionId === 'tournaments-section' && currentTournamentGameId) {
+                            const activeTab = document.querySelector('#tournamentsTabsEl .active');
+                            filterTournaments(currentTournamentGameId, currentTournamentModeId, activeTab ? activeTab.dataset.status : 'upcoming');
+                        }
                         listenToWalletHistory();
                         fetchUserMatchStats();
                     });
@@ -1547,7 +1653,9 @@
 
         // ================= GAMES & MODES INTEGRATION =================
         function loadGames() {
-            const list = document.getElementById('gamesListEl'); const games = Object.entries(allGames);
+            const list = document.getElementById('gamesListEl');
+            if(!list) return;
+            const games = Object.entries(allGames);
             list.classList.remove('placeholder-glow'); list.innerHTML = '';
             if(games.length > 0) { 
                 games.forEach(([id, g]) => { if(g.status === 'inactive') return; list.innerHTML += `<div class="game-card-new" style="background-image:url('${g.imageUrl || g.logo || 'https://via.placeholder.com/150'}')" data-id="${id}"><div class="game-card-new-overlay"><span>${g.name}</span></div></div>`; });
@@ -1556,7 +1664,12 @@
                         currentTournamentGameId = c.dataset.id;
                         const hasModes = Object.values(allModes).some(m => m.gameId === currentTournamentGameId && m.status !== 'inactive');
                         if(hasModes) { loadModes(currentTournamentGameId); showSection('modes-section', 'home-section'); } 
-                        else { currentTournamentModeId = null; showSection('tournaments-section', 'home-section'); filterTournaments(currentTournamentGameId, null, document.querySelector('.tournament-tabs .active').dataset.status); }
+                        else {
+                            currentTournamentModeId = null;
+                            showSection('tournaments-section', 'home-section');
+                            const activeTab = document.querySelector('#tournamentsTabsEl .active');
+                            filterTournaments(currentTournamentGameId, null, activeTab ? activeTab.dataset.status : 'upcoming');
+                        }
                     };
                 });
             }
@@ -1569,27 +1682,72 @@
             modesArray.sort((a,b) => (a[1].sortOrder||0) - (b[1].sortOrder||0));
             modesArray.forEach(([mId, m]) => { list.innerHTML += `<div class="mode-card" style="background-image:url('${m.thumbnailUrl || m.logo || gData.imageUrl || gData.logo || 'https://via.placeholder.com/150'}')" data-id="${mId}" data-name="${m.modeName || m.name}"><div class="mode-card-overlay"><span>${m.modeName || m.name}</span></div></div>`; });
             list.querySelectorAll('.mode-card').forEach(c => {
-                c.onclick = () => { currentTournamentModeId = c.dataset.id; showSection('tournaments-section', 'modes-section'); filterTournaments(currentTournamentGameId, currentTournamentModeId, document.querySelector('.tournament-tabs .active').dataset.status); };
+                c.onclick = () => {
+                    currentTournamentModeId = c.dataset.id;
+                    showSection('tournaments-section', 'modes-section');
+                    const activeTab = document.querySelector('#tournamentsTabsEl .active');
+                    filterTournaments(currentTournamentGameId, currentTournamentModeId, activeTab ? activeTab.dataset.status : 'upcoming');
+                };
             });
         }
 
-        function loadMyContests() {
-            const joined = Object.keys(userProfile?.joinedTournaments||{}); 
+        function loadMyContests(filterStatus = currentMyContestStatus) {
+            const status = filterStatus || 'ongoing';
+            const joined = Object.keys(userProfile?.joinedTournaments || {});
             const listEl = document.getElementById('myContestsListEl');
-            if(joined.length === 0) { listEl.innerHTML = ''; listEl.classList.remove('placeholder-glow'); getEl('noContestsMessageEl').style.display='block'; return; } 
-            getEl('noContestsMessageEl').style.display='none'; listEl.innerHTML = ''; listEl.classList.remove('placeholder-glow');
-            let count = 0;
-            for(let id of joined) { if(allTournamentsData[id] && ['upcoming','ongoing'].includes(allTournamentsData[id].status)) { listEl.appendChild(createCard(id, allTournamentsData[id])); count++; } }
-            if(count === 0) getEl('noContestsMessageEl').style.display='block'; else getEl('noContestsMessageEl').style.display='none';
+            const emptyEl = document.getElementById('noContestsMessageEl');
+            const emptyTextEl = document.getElementById('noContestsTextEl');
+            if(!listEl || !emptyEl) return;
+
+            listEl.classList.remove('placeholder-glow');
+            listEl.innerHTML = '';
+
+            const lang = localStorage.getItem("app_lang") || "en";
+            const emptyMsgKey = status === 'ongoing' ? 'no_ongoing_matches' : (status === 'upcoming' ? 'no_upcoming_matches' : 'no_completed_matches');
+            if (emptyTextEl && translations[lang]?.[emptyMsgKey]) {
+                emptyTextEl.textContent = translations[lang][emptyMsgKey];
+            }
+
+            if(joined.length === 0) {
+                emptyEl.style.display = 'block';
+                return;
+            }
+
+            const matched = [];
+            for (const id of joined) {
+                const t = allTournamentsData[id];
+                if (!t) continue;
+                const tStatus = t.status || 'upcoming';
+                const isMatch = (status === 'completed')
+                    ? (tStatus === 'completed' || tStatus === 'result' || tStatus === 'canceled')
+                    : (tStatus === status);
+                if (isMatch) matched.push([id, t]);
+            }
+
+            if (status === 'completed') {
+                matched.sort(([, a], [, b]) => (b.startTime || 0) - (a.startTime || 0));
+            } else {
+                matched.sort(([, a], [, b]) => (a.startTime || 0) - (b.startTime || 0));
+            }
+
+            if (matched.length === 0) {
+                emptyEl.style.display = 'block';
+                return;
+            }
+
+            emptyEl.style.display = 'none';
+            matched.forEach(([id, t]) => listEl.appendChild(createCard(id, t)));
         }
 
-        document.querySelectorAll('.tournament-tabs .tab-item').forEach(t => t.onclick = e => { 
-            document.querySelectorAll('.tournament-tabs .tab-item').forEach(x=>x.classList.remove('active')); e.target.classList.add('active'); 
-            filterTournaments(currentTournamentGameId, currentTournamentModeId, e.target.dataset.status); 
+        document.querySelectorAll('#tournamentsTabsEl .tab-item').forEach(t => t.onclick = e => { 
+            document.querySelectorAll('#tournamentsTabsEl .tab-item').forEach(x=>x.classList.remove('active'));
+            e.currentTarget.classList.add('active'); 
+            filterTournaments(currentTournamentGameId, currentTournamentModeId, e.currentTarget.dataset.status); 
         });
         
         function filterTournaments(gameId, modeId, status) {
             const cont = document.getElementById('tournamentsListContainerEl'); 
+            if(!cont) return;
             cont.classList.remove('placeholder-glow'); getEl('noTournamentsMessageEl').style.display='none';
             const tArray = Object.entries(allTournamentsData).filter(([,t]) => {
                 if(t.gameId !== gameId) return false;
@@ -1690,7 +1848,7 @@
                 mBody.innerHTML = html; modals.prizeList.show();
             });
 
-            // ESPORTS SLOT SELECTION SYSTEM (NEW)
+            // ESPORTS SLOT SELECTION SYSTEM
             card.querySelector('.btn-join')?.addEventListener('click', () => { 
                 getEl('dynamicPlayerInputsContainer').innerHTML = '';
                 getEl('joinTournamentIdInput').value = id; 
@@ -1789,7 +1947,8 @@
                                 this.classList.remove('slot-available');
                                 this.classList.add('slot-selected');
                             }
-                            document.getElementById('selectedSlotInput').value = JSON.stringify(selectedSlots);
+                            const slotInput = document.getElementById('selectedSlotInput');
+                            if(slotInput) slotInput.value = JSON.stringify(selectedSlots);
                         }
                     });
                 }, 100);
@@ -1852,8 +2011,21 @@
             card.querySelector('.btn-idpass')?.addEventListener('click', () => { getEl('roomIdDisplayEl').textContent = t.roomId || 'Waiting...'; getEl('roomPasswordDisplayEl').textContent = t.roomPassword || 'Waiting...'; modals.idPass.show(); });
             card.querySelector('.btn-results')?.addEventListener('click', () => { 
                 getEl('matchDetailsModalTitleEl').textContent = "Results - " + t.name; 
+                let personalSummary = '';
+                const myReg = currentUser && t.registeredPlayers?.[currentUser.uid];
+                if (myReg) {
+                    const wonAmt = (Number(myReg.prize)||0) + (Number(myReg.extraPrize)||0) + (Number(myReg.bonus)||0);
+                    const slotDisp = myReg.slots ? myReg.slots.join(', ') : (myReg.slot || 'N/A');
+                    personalSummary = `
+                    <div class="row g-2 text-center mb-3">
+                        <div class="col-4"><div class="p-2 glass-card m-0 border-0" style="background: rgba(128,128,128,0.1);"><span class="small text-muted d-block fw-bold">Rank</span><strong class="text-main">${myReg.rank || '-'}</strong></div></div>
+                        <div class="col-4"><div class="p-2 glass-card m-0 border-0" style="background: rgba(128,128,128,0.1);"><span class="small text-muted d-block fw-bold">Kills</span><strong class="text-main">${myReg.kills || 0}</strong></div></div>
+                        <div class="col-4"><div class="p-2 glass-card m-0 border-0" style="background: rgba(128,128,128,0.1);"><span class="small text-muted d-block fw-bold">Won</span><strong style="color:#10b981;">${window.FMT_C(wonAmt)}</strong></div></div>
+                    </div>
+                    <div class="p-2 rounded mb-3 text-center small" style="background: rgba(128,128,128,0.08);">Slot(s): <strong class="text-main">${slotDisp}</strong></div>`;
+                }
                 let resultsStream = t.liveStreamUrl ? `<a href="${t.liveStreamUrl}" target="_blank" class="btn btn-danger w-100 fw-bold mt-3 py-2" style="border-radius:12px;"><i class="bi bi-youtube"></i> Highlights / VOD</a>` : '';
-                getEl('matchDetailsModalBodyEl').innerHTML = `<p class="text-muted">Check Profile -> Match History for your personal score and results.</p>${resultsStream}`; 
+                getEl('matchDetailsModalBodyEl').innerHTML = `${personalSummary}<p class="text-muted mb-0">Check Profile -> Match History for full match details and scoreboards.</p>${resultsStream}`; 
                 modals.matchDetails.show(); 
             });
             return card;
@@ -1883,7 +2055,7 @@
             }
 
             let selectedSlots = [];
-            try { selectedSlots = JSON.parse(document.getElementById('selectedSlotInput').value || '[]'); } catch(e){}
+            try { selectedSlots = JSON.parse(document.getElementById('selectedSlotInput')?.value || '[]'); } catch(e){}
             if(selectedSlots.length !== teamSize) return showToast(`Please select exactly ${teamSize} slots!`, "error");
 
             const p1Name = teamDetails[0].gameName;
@@ -1903,7 +2075,7 @@
                     if(!user) return user;
                     let uDep = Number(user.balance) || 0;
                     let uWin = Number(user.winningCash) || 0;
-                    if(uDep + uWin < totalFee) return; // Abort
+                    if(uDep + uWin < totalFee) return;
                     if(uDep >= totalFee) user.balance = uDep - totalFee;
                     else { user.balance = 0; user.winningCash = uWin - (totalFee - uDep); }
                     return user;
@@ -1920,7 +2092,7 @@
                 const rpRef = ref(db, `tournaments/${tid}/registeredPlayers`);
                 const rpTx = await runTransaction(rpRef, (players) => {
                     if(players === null) players = {};
-                    if(players[currentUser.uid]) return; // Already registered
+                    if(players[currentUser.uid]) return;
 
                     let booked = [];
                     Object.values(players).forEach(p => {
@@ -1928,7 +2100,6 @@
                         else if(p.slot) booked.push(String(p.slot));
                     });
 
-                    // Collision check
                     if(selectedSlots.some(s => booked.includes(String(s)))) return; 
 
                     players[currentUser.uid] = { 
@@ -1951,7 +2122,6 @@
                 });
 
                 if(!rpTx.committed) {
-                    // Revert Wallet deduction
                     await runTransaction(uRef, (user) => {
                         if(user) user.balance = (Number(user.balance) || 0) + totalFee;
                         return user;
@@ -1962,7 +2132,6 @@
 
                 await update(ref(db, `users/${currentUser.uid}/joinedTournaments/${tid}`), { timestamp: serverTimestamp() });
                 
-                // Localized Push Notification for Match Join
                 await push(ref(db, `users/${currentUser.uid}/notifications`), {
                     title: "Match Joined Successfully",
                     message: `You successfully booked slot(s) [${selectedSlots.join(', ')}] in ${tDat.name}. Entry Fee: ${window.FMT_C(totalFee)}.`,
@@ -1988,14 +2157,15 @@
         document.querySelectorAll('input[name="payType"]').forEach(r => r.addEventListener('change', function() { document.querySelectorAll('#optionAutoCard, #optionManualCard').forEach(c => {c.style.borderColor = 'var(--border-glass)'; c.style.background = 'transparent';}); this.closest('.glass-card').style.borderColor = 'var(--accent-cyan)'; this.closest('.glass-card').style.background = 'rgba(128,128,128,0.1)'; }));
 
         getEl('proceedToPayActionBtn').onclick = () => {
-            const type = document.querySelector('input[name="payType"]:checked').value;
+            const typeEl = document.querySelector('input[name="payType"]:checked');
+            const type = typeEl ? typeEl.value : 'manual';
             if(type === 'auto') {
                 const zkey = appSettings.payment?.zap_key;
-                if(!appSettings.payment?.gateway_enabled || !zkey) return showToast('Gateway disabled. Use Manual.', 'error');
+                if(!appSettings.payment?.gateway_enabled || !zkey || typeof ZapUPI === 'undefined') return showToast('Gateway disabled. Use Manual.', 'error');
                 showLoader(true);
                 const oid = "ORD" + Date.now();
                 ZapUPI.createOrder({ zap_key: zkey, order_id: oid, amount: finalRechargeAmt.toString(), remark: `UID:${currentUser.uid}` }, {
-                    onResponse: (url, rOid) => { set(ref(db, `orders/${rOid}`), { userId: currentUser.uid, amount: finalRechargeAmt, status: 'pending', timestamp: serverTimestamp() }).then(() => { showLoader(false); ZapUPI.loadPayment(url); }).catch(e => { showLoader(false); showToast("Sync failed", "error"); }); },
+                    onResponse: (url, rOid) => { set(ref(db, `orders/${rOid}`), { userId: currentUser.uid, amount: finalRechargeAmt, status: 'pending', timestamp: serverTimestamp() }).then(() => { showLoader(false); ZapUPI.loadPayment(url); }).catch(() => { showLoader(false); showToast("Sync failed", "error"); }); },
                     onError: err => { showLoader(false); showToast(err, "error"); }
                 });
             } else {
@@ -2010,21 +2180,22 @@
         };
 
         getEl('checkZapStatusBtn').onclick = () => {
+            if (typeof ZapUPI === 'undefined') return showToast('Payment SDK unavailable', 'error');
             const oid = getEl('statusCheckOrderId').value.trim(), zkey = appSettings.payment?.zap_key;
             if(!oid || !zkey) return showToast('Missing info', 'error');
             showLoader(true);
             ZapUPI.orderStatus({ zap_key: zkey, order_id: oid }, {
                 onResponse: (rOid, data) => { showLoader(false); const d = data.data; if(!d) return showToast('Not found', 'error');
                     getEl('statusCheckResult').style.display = 'block'; getEl('statusCheckResult').innerHTML = `<div class="mb-2"><strong>ID:</strong> ${d.order_id}</div><div class="mb-2"><strong>Status:</strong> ${d.status}</div><div><strong>Txn:</strong> ${d.txn_id || '-'}</div>`;
-                }, onError: err => { showLoader(false); showToast('Check failed', 'error'); }
+                }, onError: () => { showLoader(false); showToast('Check failed', 'error'); }
             });
         };
 
         document.querySelectorAll('.wd-tab-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 document.querySelectorAll('.wd-tab-btn').forEach(b => { b.classList.remove('active'); b.style.background = 'transparent'; b.style.color = 'var(--text-muted)'; });
-                e.target.classList.add('active'); e.target.style.background = 'var(--bg-card)'; e.target.style.color = 'var(--text-main)';
-                if (e.target.dataset.type === 'money') { getEl('wdMoneySection').style.display = 'block'; getEl('wdRedeemSection').style.display = 'none'; } 
+                e.currentTarget.classList.add('active'); e.currentTarget.style.background = 'var(--bg-card)'; e.currentTarget.style.color = 'var(--text-main)';
+                if (e.currentTarget.dataset.type === 'money') { getEl('wdMoneySection').style.display = 'block'; getEl('wdRedeemSection').style.display = 'none'; } 
                 else { getEl('wdMoneySection').style.display = 'none'; getEl('wdRedeemSection').style.display = 'block'; }
             });
         });
@@ -2032,7 +2203,7 @@
         getEl('withdrawBtnEl').onclick = () => { getEl('withdrawModalBalanceEl').innerHTML = window.FMT_C((Number(userProfile.winningCash)||0).toFixed(2)); modals.withdraw.show(); };
         
         getEl('submitWithdrawRequestBtnEl').onclick = async () => {
-            const wdType = document.querySelector('.wd-tab-btn.active').dataset.type;
+            const wdType = document.querySelector('.wd-tab-btn.active')?.dataset.type || 'money';
             const min = appSettings.minWithdraw || 50;
 
             if (wdType === 'money') {
@@ -2079,7 +2250,7 @@
                 const mName = allModes[t.modeId]?.name || 'Mode';
                 const slotDisp = st.slots ? st.slots.join(', ') : (st.slot || 'N/A');
                 let teamStr = '';
-                if(st.slots && st.slots.length > 0) { const match = st.slots[0].match(/\d+/); if(match) teamStr = `<br><span class="small text-muted">Team No: <strong class="text-white">${match[0]}</strong></span>`; }
+                if(st.slots && st.slots.length > 0) { const match = String(st.slots[0]).match(/\d+/); if(match) teamStr = `<br><span class="small text-muted">Team No: <strong class="text-white">${match[0]}</strong></span>`; }
                 
                 let statusBadge = '';
                 const ms = st.matchStatus || 'playing';
@@ -2088,7 +2259,7 @@
                 else if(ms === 'disqualified') statusBadge = '<span class="badge bg-warning text-dark">Disqualified</span>';
                 else statusBadge = '<span class="badge bg-info text-dark">Playing</span>';
                 
-                const tStat = t.status === 'result' ? 'COMPLETED' : t.status.toUpperCase();
+                const tStat = t.status === 'result' ? 'COMPLETED' : (t.status || 'UPCOMING').toUpperCase();
 
                 hHTML += `<div class="glass-card p-3 mb-3 border-start border-4" style="border-color: var(--accent-cyan) !important;">
                     <div class="d-flex justify-content-between mb-2 align-items-start">
