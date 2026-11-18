@@ -111,7 +111,7 @@
         .mode-card-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 70%); display: flex; align-items: flex-end; padding: 12px 10px; pointer-events: none; }
         .mode-card-overlay span { color: white; font-weight: 800; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
 
-        .custom-toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-card); border: 1px solid var(--accent-cyan); padding: 12px 20px; border-radius: 30px; font-weight: 700; font-size: 0.9rem; color: var(--text-main); box-shadow: var(--glow-shadow); z-index: 10000; opacity: 0; visibility: hidden; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); white-space: nowrap;}
+        .custom-toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--bg-card); border: 1px solid var(--accent-cyan); padding: 12px 20px; border-radius: 30px; font-weight: 700; font-size: 0.9rem; color: var(--text-main); box-shadow: var(--glow-shadow); z-index: 10000; opacity: 0; visibility: hidden; transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis;}
         .custom-toast.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
         .toast-error { border-color: #ef4444; color: #ef4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);}
         .toast-success { border-color: #10b981; color: #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);}
@@ -773,18 +773,23 @@
         let allModes = {};
         let allTournamentsData = {}; 
         let modals = {};
+        let pendingSignupName = null;
 
         // Real-time Trackers
         let activeUserListener = null;
         let activeDepositsListener = null;
         let activeWithdrawalsListener = null;
         let activeReferralsListener = null;
+        let activeWalletReferralsListener = null;
         let activeTournamentsListener = null;
         let activeUserNotifsListener = null;
         let activeGlobalNotifsListener = null;
         let globalThemeLock = false;
         let currentAdminTheme = 'theme-neon';
         let userTxns = [];
+        let cachedDeposits = [];
+        let cachedWithdrawals = [];
+        let cachedReferralsList = [];
         let fetchedNotifs = [];
 
         function clearUserListeners() {
@@ -792,9 +797,15 @@
             if(activeDepositsListener) { off(activeDepositsListener.ref, 'value', activeDepositsListener.callback); activeDepositsListener = null; }
             if(activeWithdrawalsListener) { off(activeWithdrawalsListener.ref, 'value', activeWithdrawalsListener.callback); activeWithdrawalsListener = null; }
             if(activeReferralsListener) { off(activeReferralsListener.ref, 'value', activeReferralsListener.callback); activeReferralsListener = null; }
+            if(activeWalletReferralsListener) { off(activeWalletReferralsListener.ref, 'value', activeWalletReferralsListener.callback); activeWalletReferralsListener = null; }
             if(activeTournamentsListener) { off(activeTournamentsListener.ref, 'value', activeTournamentsListener.callback); activeTournamentsListener = null; }
             if(activeUserNotifsListener) { off(activeUserNotifsListener.ref, 'value', activeUserNotifsListener.callback); activeUserNotifsListener = null; }
             if(activeGlobalNotifsListener) { off(activeGlobalNotifsListener.ref, 'value', activeGlobalNotifsListener.callback); activeGlobalNotifsListener = null; }
+            cachedDeposits = [];
+            cachedWithdrawals = [];
+            cachedReferralsList = [];
+            userTxns = [];
+            fetchedNotifs = [];
         }
 
         const safeStr = (str, def = 'N/A') => (str === null || str === undefined || String(str).trim() === '') ? def : str;
@@ -860,7 +871,7 @@
             if(!toast) return;
             toast.innerHTML = type === 'success' ? `<i class="bi bi-check-circle-fill me-2"></i> ${msg}` : `<i class="bi bi-exclamation-circle-fill me-2"></i> ${msg}`;
             toast.className = `custom-toast show ${type === 'error' ? 'toast-error' : 'toast-success'}`;
-            setTimeout(() => toast.classList.remove('show'), 3000);
+            setTimeout(() => toast.classList.remove('show'), 3500);
         }
 
         // ================= ADMIN & USER THEME LOGIC =================
@@ -1075,7 +1086,7 @@
                     onResponse: async function(reqOrderId, data) {
                         try {
                             const d = data.data;
-                            if(d && d.status === 'Success') {
+                            if(d && String(d.status || '').toLowerCase() === 'success') {
                                 const orderRef = ref(db, `orders/${orderId}`);
                                 const orderSnap = await get(orderRef);
                                 if (orderSnap.exists() && orderSnap.val().status === 'completed') {
@@ -1233,7 +1244,8 @@
                         if(currentSectionId === 'my-contests-section') loadMyContests(currentMyContestStatus);
                     } else {
                         const refCode = await generateReferralCode();
-                        userProfile = { uid: user.uid, displayName: user.email?.split('@')[0], email: user.email, balance: appSettings.signupBonus ?? 10, winningCash: 0, bonusCash: appSettings.signupBonus ?? 10, joinedTournaments: {}, referralCode: refCode, createdAt: serverTimestamp() };
+                        const initName = pendingSignupName || user.email?.split('@')[0] || 'Player';
+                        userProfile = { uid: user.uid, displayName: initName, email: user.email, balance: appSettings.signupBonus ?? 10, winningCash: 0, bonusCash: appSettings.signupBonus ?? 10, joinedTournaments: {}, referralCode: refCode, createdAt: serverTimestamp() };
                         await set(uRef, userProfile);
                         updateUIForUser();
                         setupReferralSystem();
@@ -1250,7 +1262,7 @@
                             const activeTab = document.querySelector('#tournamentsTabsEl .active');
                             filterTournaments(currentTournamentGameId, currentTournamentModeId, activeTab ? activeTab.dataset.status : 'upcoming');
                         }
-                        listenToWalletHistory();
+                        rebuildWalletTxns();
                         fetchUserMatchStats();
                     });
                     activeTournamentsListener = { ref: tRef, callback: tCallback };
@@ -1269,14 +1281,15 @@
 
         getEl('loginEmailBtnEl').onclick = async () => {
             showLoader(true);
-            try { await signInWithEmailAndPassword(auth, getEl('loginEmailInputEl').value, getEl('loginPasswordInputEl').value); } 
+            try { await signInWithEmailAndPassword(auth, getEl('loginEmailInputEl').value.trim(), getEl('loginPasswordInputEl').value); } 
             catch (e) { showToast("Login failed. Check details.", "error"); } finally { showLoader(false); }
         };
 
         getEl('signupEmailBtnEl').onclick = async () => {
-            const name = getEl('signupNameInputEl').value, em = getEl('signupEmailInputEl').value, pw = getEl('signupPasswordInputEl').value;
+            const name = getEl('signupNameInputEl').value.trim(), em = getEl('signupEmailInputEl').value.trim(), pw = getEl('signupPasswordInputEl').value;
             if(!name || pw.length<6) return showToast('Enter name and min 6 char password.', "error");
             showLoader(true);
+            pendingSignupName = name;
             try { 
                 const cred = await createUserWithEmailAndPassword(auth, em, pw); 
                 const newRefCode = await generateReferralCode();
@@ -1287,10 +1300,12 @@
                     const snap = await get(query(ref(db, 'users'), orderByChild('referralCode'), equalTo(refCodeInput)));
                     if(snap.exists()) {
                         const referrerUid = Object.keys(snap.val())[0];
-                        await push(ref(db, 'pendingReferrals'), {referrerUid: referrerUid, referredEmail: em, status: 'pending', timestamp: serverTimestamp()});
+                        if (referrerUid !== cred.user.uid) {
+                            await push(ref(db, 'pendingReferrals'), {referrerUid: referrerUid, referredEmail: em, status: 'pending', timestamp: serverTimestamp()});
+                        }
                     }
                 }
-            } catch (e) { showToast(e.message, "error"); } finally { showLoader(false); }
+            } catch (e) { showToast(e.message, "error"); } finally { pendingSignupName = null; showLoader(false); }
         };
 
         getEl('showSignupToggleBtnEl').onclick = () => { getEl('emailLoginForm').style.display='none'; getEl('emailSignupForm').style.display='block'; };
@@ -1342,8 +1357,13 @@
             if(getEl('minWithdrawAmountEl').tagName) getEl('minWithdrawAmountEl').textContent = appSettings.minWithdraw || 50;
             if(getEl('minRedeemAmountEl').tagName) getEl('minRedeemAmountEl').textContent = appSettings.minWithdraw || 50;
 
-            if(appSettings.payment?.gateway_enabled === true && getEl('optionAutoCard').tagName) getEl('optionAutoCard').style.display = 'flex';
-            else if (getEl('optionAutoCard').tagName){ getEl('optionAutoCard').style.display = 'none'; getEl('optionManualCard')?.querySelector('input')?.setAttribute('checked','true'); }
+            if(appSettings.payment?.gateway_enabled === true && getEl('optionAutoCard').tagName) {
+                getEl('optionAutoCard').style.display = 'flex';
+            } else if (getEl('optionAutoCard').tagName) {
+                getEl('optionAutoCard').style.display = 'none';
+                const manualRadio = getEl('optionManualCard')?.querySelector('input');
+                if (manualRadio) { manualRadio.checked = true; manualRadio.setAttribute('checked', 'true'); }
+            }
 
             const waBtn = document.getElementById('supportWaBtn'), tgBtn = document.getElementById('supportTgBtn'), noMsg = document.getElementById('noSupportLinksMsg');
             if(waBtn) { waBtn.style.display = 'none'; tgBtn.style.display = 'none'; noMsg.style.display = 'none';
@@ -1558,6 +1578,32 @@
             });
         }
 
+        function rebuildWalletTxns() {
+            if (!currentUser) return;
+            userTxns = [];
+            cachedDeposits.forEach(d => {
+                let type = 'Deposit';
+                if (d.paymentMethod?.includes('REFUND') || d.paymentMethod?.includes('REFUND:')) type = 'Refund';
+                else if (d.paymentMethod?.includes('Redeem Code')) type = 'Gift Code';
+                else if (d.paymentMethod?.includes('Manual')) type = 'Manual Deposit';
+                userTxns.push({...d, type, time: d.timestamp || d.processedAt || 0});
+            });
+            cachedWithdrawals.forEach(w => {
+                userTxns.push({...w, type: w.withdrawalType === 'redeem' ? 'Redeem Code' : 'Withdraw', time: w.requestTimestamp || w.processedAt || 0});
+            });
+            Object.entries(allTournamentsData).forEach(([tId, t]) => {
+                if (t.winningsCredited && t.registeredPlayers?.[currentUser.uid]) {
+                    const pData = t.registeredPlayers[currentUser.uid];
+                    const pz = Number(pData.prize || 0) + Number(pData.extraPrize || 0) + Number(pData.bonus || 0);
+                    if(pz > 0) userTxns.push({ id: (t.id || tId)+'_win', type: 'Winnings', amount: pz, status: 'Success', time: t.endTime || t.startTime || 0, adminNote: t.name });
+                }
+            });
+            cachedReferralsList.forEach(r => {
+                if(r.status === 'completed') userTxns.push({ id: r.id, type: 'Referral Bonus', amount: r.bonusAmount, status: 'Success', time: r.creditedAt || 0 });
+            });
+            if(currentSectionId === 'wallet-section') renderWalletHistory();
+        }
+
         function listenToWalletHistory() {
             if(!currentUser) return;
             const list = document.getElementById('walletHistoryListEl'); 
@@ -1567,33 +1613,10 @@
             const withRef = query(ref(db, 'withdrawals'), orderByChild('userId'), equalTo(currentUser.uid));
             const refRef = query(ref(db, 'pendingReferrals'), orderByChild('referrerUid'), equalTo(currentUser.uid));
 
-            let deposits = [], withdrawals = [], referralsList = [];
-
-            const updateTxns = () => {
-                userTxns = [];
-                deposits.forEach(d => {
-                    let type = 'Deposit';
-                    if (d.paymentMethod?.includes('REFUND') || d.paymentMethod?.includes('REFUND:')) type = 'Refund';
-                    else if (d.paymentMethod?.includes('Redeem Code')) type = 'Gift Code';
-                    else if (d.paymentMethod?.includes('Manual')) type = 'Manual Deposit';
-                    userTxns.push({...d, type, time: d.timestamp || d.processedAt || 0});
-                });
-                withdrawals.forEach(w => { userTxns.push({...w, type: w.withdrawalType === 'redeem' ? 'Redeem Code' : 'Withdraw', time: w.requestTimestamp || w.processedAt || 0}); });
-                Object.values(allTournamentsData).forEach(t => {
-                    if (t.winningsCredited && t.registeredPlayers?.[currentUser.uid]) {
-                        const pData = t.registeredPlayers[currentUser.uid];
-                        const pz = Number(pData.prize || 0) + Number(pData.extraPrize || 0) + Number(pData.bonus || 0);
-                        if(pz > 0) userTxns.push({ id: t.id+'_win', type: 'Winnings', amount: pz, status: 'Success', time: t.endTime || t.startTime || 0, adminNote: t.name });
-                    }
-                });
-                referralsList.forEach(r => { if(r.status === 'completed') userTxns.push({ id: r.id, type: 'Referral Bonus', amount: r.bonusAmount, status: 'Success', time: r.creditedAt }); });
-                if(currentSectionId === 'wallet-section') renderWalletHistory();
-            };
-
-            if(!activeDepositsListener) activeDepositsListener = { ref: depRef, callback: onValue(depRef, snap => { deposits = []; if(snap.exists()) snap.forEach(c => deposits.push({...c.val(), id: c.key})); updateTxns(); }) };
-            if(!activeWithdrawalsListener) activeWithdrawalsListener = { ref: withRef, callback: onValue(withRef, snap => { withdrawals = []; if(snap.exists()) snap.forEach(c => withdrawals.push({...c.val(), id: c.key})); updateTxns(); }) };
-            onValue(refRef, snap => { referralsList = []; if(snap.exists()) snap.forEach(c => referralsList.push({...c.val(), id: c.key})); updateTxns(); });
-            updateTxns();
+            if(!activeDepositsListener) activeDepositsListener = { ref: depRef, callback: onValue(depRef, snap => { cachedDeposits = []; if(snap.exists()) snap.forEach(c => cachedDeposits.push({...c.val(), id: c.key})); rebuildWalletTxns(); }) };
+            if(!activeWithdrawalsListener) activeWithdrawalsListener = { ref: withRef, callback: onValue(withRef, snap => { cachedWithdrawals = []; if(snap.exists()) snap.forEach(c => cachedWithdrawals.push({...c.val(), id: c.key})); rebuildWalletTxns(); }) };
+            if(!activeWalletReferralsListener) activeWalletReferralsListener = { ref: refRef, callback: onValue(refRef, snap => { cachedReferralsList = []; if(snap.exists()) snap.forEach(c => cachedReferralsList.push({...c.val(), id: c.key})); rebuildWalletTxns(); }) };
+            rebuildWalletTxns();
         }
 
         // ================= PROMO / REDEEM =================
@@ -1602,7 +1625,13 @@
             if(!code) return showToast("Enter code", "error");
             showLoader(true);
             try {
-                const res = await runTransaction(ref(db, `redeemCodes/${code}`), (data) => {
+                const codeRef = ref(db, `redeemCodes/${code}`);
+                const existingSnap = await get(codeRef);
+                if (!existingSnap.exists() || existingSnap.val().status !== 'active' || existingSnap.val().usedBy) {
+                    showLoader(false);
+                    return showToast("Invalid or used code", "error");
+                }
+                const res = await runTransaction(codeRef, (data) => {
                     if (data === null) return data;
                     if (data.status === 'active' && !data.usedBy) { data.status = 'used'; data.usedBy = currentUser.uid; data.usedAt = Date.now(); return data; }
                     return; 
@@ -1622,7 +1651,17 @@
             if(!code) return showToast("Enter code", "error");
             showLoader(true);
             try {
-                const res = await runTransaction(ref(db, `couponCodes/${code}`), (data) => {
+                const couponRef = ref(db, `couponCodes/${code}`);
+                const existingSnap = await get(couponRef);
+                if (!existingSnap.exists() || existingSnap.val().status !== 'active') {
+                    showLoader(false);
+                    return showToast("Invalid or expired coupon", "error");
+                }
+                if (existingSnap.val().usedUsers?.[currentUser.uid]) {
+                    showLoader(false);
+                    return showToast("Coupon already used", "error");
+                }
+                const res = await runTransaction(couponRef, (data) => {
                     if (data === null) return data;
                     if (data.status === 'active') {
                         if (!data.usedUsers) data.usedUsers = {};
@@ -1693,7 +1732,12 @@
 
         function loadMyContests(filterStatus = currentMyContestStatus) {
             const status = filterStatus || 'ongoing';
-            const joined = Object.keys(userProfile?.joinedTournaments || {});
+            const joinedSet = new Set(Object.keys(userProfile?.joinedTournaments || {}));
+            if (currentUser) {
+                Object.entries(allTournamentsData).forEach(([id, t]) => {
+                    if (t?.registeredPlayers?.[currentUser.uid]) joinedSet.add(id);
+                });
+            }
             const listEl = document.getElementById('myContestsListEl');
             const emptyEl = document.getElementById('noContestsMessageEl');
             const emptyTextEl = document.getElementById('noContestsTextEl');
@@ -1708,13 +1752,13 @@
                 emptyTextEl.textContent = translations[lang][emptyMsgKey];
             }
 
-            if(joined.length === 0) {
+            if(joinedSet.size === 0) {
                 emptyEl.style.display = 'block';
                 return;
             }
 
             const matched = [];
-            for (const id of joined) {
+            for (const id of joinedSet) {
                 const t = allTournamentsData[id];
                 if (!t) continue;
                 const tStatus = t.status || 'upcoming';
@@ -1764,7 +1808,9 @@
 
         function createCard(id, t) {
             const card = document.createElement('div'); card.className = 'tournament-card';
-            const eFee = t.entryFee || 0, maxP = t.maxPlayers || 0, regC = Object.keys(t.registeredPlayers || {}).length, isJ = currentUser && userProfile?.joinedTournaments?.[id];
+            const eFee = Number(t.entryFee) || 0, maxP = Number(t.maxPlayers) || 0;
+            const regC = Object.values(t.registeredPlayers || {}).reduce((acc, p) => acc + (Array.isArray(p?.slots) ? p.slots.length : 1), 0);
+            const isJ = currentUser && (userProfile?.joinedTournaments?.[id] || t.registeredPlayers?.[currentUser.uid]);
             const displayMatchId = t.matchId ? t.matchId : `MATCH_${id.substring(id.length - 6).toUpperCase()}`;
             const gName = t.gameName || allGames[t.gameId]?.name || 'Game';
             const mName = t.modeName || allModes[t.modeId]?.modeName || allModes[t.modeId]?.name || 'Match';
@@ -1888,8 +1934,8 @@
                 const bookedSlots = [];
                 if (t.registeredPlayers) {
                     Object.values(t.registeredPlayers).forEach(rp => { 
-                        if(rp.slots) rp.slots.forEach(s => bookedSlots.push(String(s)));
-                        else if(rp.slot) bookedSlots.push(String(rp.slot)); 
+                        if(Array.isArray(rp?.slots)) rp.slots.forEach(s => bookedSlots.push(String(s)));
+                        else if(rp?.slot) bookedSlots.push(String(rp.slot)); 
                     });
                 }
                 const totalSlots = t.maxPlayers || 100;
@@ -1927,31 +1973,30 @@
 
                 slotUI += `<input type="hidden" id="selectedSlotInput" required></div>`;
                 inputsHTML += slotUI;
-                getEl('dynamicPlayerInputsContainer').innerHTML = inputsHTML; 
+                const container = getEl('dynamicPlayerInputsContainer');
+                container.innerHTML = inputsHTML; 
 
-                setTimeout(() => {
-                    let selectedSlots = [];
-                    document.querySelectorAll('.slot-available').forEach(btn => {
-                        btn.onclick = function() {
-                            let slotVal = this.dataset.slot;
-                            if(selectedSlots.includes(slotVal)) {
-                                selectedSlots = selectedSlots.filter(s => s !== slotVal);
-                                this.classList.remove('slot-selected');
-                                this.classList.add('slot-available');
-                            } else {
-                                if(selectedSlots.length >= teamSize) {
-                                    showToast(`You can only select ${teamSize} slot(s)`, 'error');
-                                    return;
-                                }
-                                selectedSlots.push(slotVal);
-                                this.classList.remove('slot-available');
-                                this.classList.add('slot-selected');
+                let selectedSlots = [];
+                container.querySelectorAll('.slot-available').forEach(btn => {
+                    btn.onclick = function() {
+                        let slotVal = this.dataset.slot;
+                        if(selectedSlots.includes(slotVal)) {
+                            selectedSlots = selectedSlots.filter(s => s !== slotVal);
+                            this.classList.remove('slot-selected');
+                            this.classList.add('slot-available');
+                        } else {
+                            if(selectedSlots.length >= teamSize) {
+                                showToast(`You can only select ${teamSize} slot(s)`, 'error');
+                                return;
                             }
-                            const slotInput = document.getElementById('selectedSlotInput');
-                            if(slotInput) slotInput.value = JSON.stringify(selectedSlots);
+                            selectedSlots.push(slotVal);
+                            this.classList.remove('slot-available');
+                            this.classList.add('slot-selected');
                         }
-                    });
-                }, 100);
+                        const slotInput = document.getElementById('selectedSlotInput');
+                        if(slotInput) slotInput.value = JSON.stringify(selectedSlots);
+                    }
+                });
 
                 modals.join.show(); 
             });
@@ -1966,12 +2011,11 @@
                 }
 
                 const maxSlots = t.maxPlayers || 100;
-                const bookedSlotsCount = Object.keys(t.registeredPlayers || {}).reduce((acc, curr) => {
-                    const p = t.registeredPlayers[curr];
-                    if(p.slots) return acc + p.slots.length;
+                const bookedSlotsCount = Object.values(t.registeredPlayers || {}).reduce((acc, p) => {
+                    if(Array.isArray(p?.slots)) return acc + p.slots.length;
                     return acc + 1;
                 }, 0);
-                const remainingSlots = maxSlots - bookedSlotsCount;
+                const remainingSlots = Math.max(0, maxSlots - bookedSlotsCount);
 
                 let statsGrid = `
                 <div class="row g-2 text-center mb-3">
@@ -2015,7 +2059,7 @@
                 const myReg = currentUser && t.registeredPlayers?.[currentUser.uid];
                 if (myReg) {
                     const wonAmt = (Number(myReg.prize)||0) + (Number(myReg.extraPrize)||0) + (Number(myReg.bonus)||0);
-                    const slotDisp = myReg.slots ? myReg.slots.join(', ') : (myReg.slot || 'N/A');
+                    const slotDisp = Array.isArray(myReg.slots) ? myReg.slots.join(', ') : (myReg.slot || 'N/A');
                     personalSummary = `
                     <div class="row g-2 text-center mb-3">
                         <div class="col-4"><div class="p-2 glass-card m-0 border-0" style="background: rgba(128,128,128,0.1);"><span class="small text-muted d-block fw-bold">Rank</span><strong class="text-main">${myReg.rank || '-'}</strong></div></div>
@@ -2031,17 +2075,12 @@
             return card;
         }
 
-        // ================= MATCH JOIN LOGIC (WITH TRANSACTION) =================
+        // ================= MATCH JOIN LOGIC (FIXED PERMISSION + ATOMIC REFUND) =================
         getEl('confirmJoinBtn').onclick = async () => {
+            if (!currentUser) return showToast("Please login first!", "error");
             const tid = getEl('joinTournamentIdInput').value;
-            const tDat = allTournamentsData[tid];
-            if(!tDat) return showToast("Tournament not found!", "error");
-            if(tDat.status === 'canceled' || tDat.status === 'completed' || tDat.status === 'result') return showToast("Tournament closed", "error");
-
-            const eFee = tDat.entryFee || 0;
             const teamSize = parseInt(getEl('joinTournamentForm').dataset.teamSize || 1);
-            const totalFee = eFee * teamSize;
-            
+
             let teamDetails = [];
             for(let i=1; i<=teamSize; i++) {
                 let name = getEl(`pName_${i}`)?.value.trim() || '';
@@ -2056,92 +2095,179 @@
 
             let selectedSlots = [];
             try { selectedSlots = JSON.parse(document.getElementById('selectedSlotInput')?.value || '[]'); } catch(e){}
-            if(selectedSlots.length !== teamSize) return showToast(`Please select exactly ${teamSize} slots!`, "error");
+            if(selectedSlots.length !== teamSize) return showToast(`Please select exactly ${teamSize} slot(s)!`, "error");
 
-            const p1Name = teamDetails[0].gameName;
-            const p1Uid = teamDetails[0].gameUid;
-            
-            const safeUserName = safeStr(userProfile.displayName || userProfile.email?.split('@')[0], 'Unknown').trim();
-            const safeUserEmail = safeStr(userProfile.email, 'Unknown').trim();
-
-            if((Number(userProfile.balance)||0) + (Number(userProfile.winningCash)||0) < totalFee) return showToast("Insufficient Wallet Balance", "error");
-            if(userProfile?.joinedTournaments?.[tid]) return showToast("You already joined this match!", "error");
-            
             showLoader(true);
+            let deductedDep = 0;
+            let deductedWin = 0;
+            const uRef = ref(db, `users/${currentUser.uid}`);
+
+            async function refundDeductedBalance() {
+                if (deductedDep <= 0 && deductedWin <= 0) return;
+                const refDep = deductedDep;
+                const refWin = deductedWin;
+                deductedDep = 0;
+                deductedWin = 0;
+                try {
+                    await runTransaction(uRef, (user) => {
+                        if (!user) return user;
+                        user.balance = (Number(user.balance) || 0) + refDep;
+                        user.winningCash = (Number(user.winningCash) || 0) + refWin;
+                        return user;
+                    });
+                } catch (refundErr) {
+                    console.error("Refund failed:", refundErr);
+                }
+            }
+
             try {
-                // 1. Transaction to deduct balance safely
-                const uRef = ref(db, `users/${currentUser.uid}`);
-                const wTx = await runTransaction(uRef, (user) => {
-                    if(!user) return user;
-                    let uDep = Number(user.balance) || 0;
-                    let uWin = Number(user.winningCash) || 0;
-                    if(uDep + uWin < totalFee) return;
-                    if(uDep >= totalFee) user.balance = uDep - totalFee;
-                    else { user.balance = 0; user.winningCash = uWin - (totalFee - uDep); }
-                    return user;
+                // 1. Fetch fresh tournament state & verify slot availability BEFORE deducting wallet
+                const tSnap = await get(ref(db, `tournaments/${tid}`));
+                if(!tSnap.exists()) { showLoader(false); return showToast("Tournament not found!", "error"); }
+                const tDat = tSnap.val();
+                if(['canceled', 'completed', 'result'].includes(tDat.status)) { showLoader(false); return showToast("Tournament closed", "error"); }
+
+                if(tDat.registeredPlayers?.[currentUser.uid] || userProfile?.joinedTournaments?.[tid]) {
+                    showLoader(false);
+                    return showToast("You already joined this match!", "error");
+                }
+
+                const existingPlayers = tDat.registeredPlayers || {};
+                const alreadyBookedSlots = [];
+                Object.values(existingPlayers).forEach(p => {
+                    if(Array.isArray(p?.slots)) p.slots.forEach(s => alreadyBookedSlots.push(String(s)));
+                    else if(p?.slot) alreadyBookedSlots.push(String(p.slot));
                 });
-                
-                if(!wTx.committed) { showLoader(false); return showToast("Insufficient Wallet Balance", "error"); }
+
+                if(selectedSlots.some(s => alreadyBookedSlots.includes(String(s)))) {
+                    showLoader(false);
+                    return showToast("Selected slot(s) already taken! Please select another.", "error");
+                }
+
+                const maxP = Number(tDat.maxPlayers) || 0;
+                if(maxP > 0 && (alreadyBookedSlots.length + selectedSlots.length > maxP)) {
+                    showLoader(false);
+                    return showToast("Match slots are full!", "error");
+                }
+
+                const eFee = Number(tDat.entryFee) || 0;
+                const totalFee = eFee * teamSize;
+
+                // 2. Deduct wallet balance safely (if totalFee > 0)
+                if (totalFee > 0) {
+                    const wTx = await runTransaction(uRef, (user) => {
+                        if(!user) return user;
+                        let uDep = Number(user.balance) || 0;
+                        let uWin = Number(user.winningCash) || 0;
+                        if(uDep + uWin < totalFee) return;
+                        if(uDep >= totalFee) {
+                            deductedDep = totalFee;
+                            deductedWin = 0;
+                            user.balance = uDep - totalFee;
+                        } else {
+                            deductedDep = uDep;
+                            deductedWin = totalFee - uDep;
+                            user.balance = 0;
+                            user.winningCash = uWin - deductedWin;
+                        }
+                        return user;
+                    });
+                    if(!wTx.committed) {
+                        deductedDep = 0; deductedWin = 0;
+                        showLoader(false);
+                        return showToast("Insufficient Wallet Balance", "error");
+                    }
+                }
+
+                const p1Name = teamDetails[0].gameName;
+                const p1Uid = teamDetails[0].gameUid;
+                const safeUserName = safeStr(userProfile.displayName || currentUser.email?.split('@')[0], 'Unknown').trim();
+                const safeUserEmail = safeStr(userProfile.email || currentUser.email, 'Unknown').trim();
 
                 let tModeEnum = 'Solo';
                 if(teamSize == 2) tModeEnum = 'Duo';
                 if(teamSize == 3) tModeEnum = 'Trio';
                 if(teamSize == 4) tModeEnum = 'Squad';
 
-                // 2. Transaction to securely book slots
-                const rpRef = ref(db, `tournaments/${tid}/registeredPlayers`);
-                const rpTx = await runTransaction(rpRef, (players) => {
-                    if(players === null) players = {};
-                    if(players[currentUser.uid]) return;
+                const myJoinTimestamp = Date.now();
+                const playerPayload = { 
+                    timestamp: myJoinTimestamp, 
+                    gameName: p1Name,       
+                    gameUid: p1Uid,         
+                    playerName: p1Name,     
+                    playerUid: p1Uid,       
+                    userName: safeUserName, 
+                    userEmail: safeUserEmail,
+                    userId: currentUser.uid,
+                    matchId: tid,
+                    teamMode: tModeEnum,
+                    teamDetails: teamDetails,
+                    slot: selectedSlots[0],
+                    slots: selectedSlots,
+                    matchStatus: 'playing'
+                };
 
-                    let booked = [];
-                    Object.values(players).forEach(p => {
-                        if(p.slots) p.slots.forEach(s => booked.push(String(s)));
-                        else if(p.slot) booked.push(String(p.slot));
-                    });
-
-                    if(selectedSlots.some(s => booked.includes(String(s)))) return; 
-
-                    players[currentUser.uid] = { 
-                        timestamp: Date.now(), 
-                        gameName: p1Name,       
-                        gameUid: p1Uid,         
-                        playerName: p1Name,     
-                        playerUid: p1Uid,       
-                        userName: safeUserName, 
-                        userEmail: safeUserEmail,
-                        userId: currentUser.uid,
-                        matchId: tid,
-                        teamMode: tModeEnum,
-                        teamDetails: teamDetails,
-                        slot: selectedSlots[0],
-                        slots: selectedSlots,
-                        matchStatus: 'playing'
-                    };
-                    return players;
+                // 3. Write ONLY to user's own authorized node: tournaments/${tid}/registeredPlayers/${currentUser.uid}
+                const rpUserRef = ref(db, `tournaments/${tid}/registeredPlayers/${currentUser.uid}`);
+                const rpTx = await runTransaction(rpUserRef, (existing) => {
+                    if(existing !== null) return;
+                    return playerPayload;
                 });
 
                 if(!rpTx.committed) {
-                    await runTransaction(uRef, (user) => {
-                        if(user) user.balance = (Number(user.balance) || 0) + totalFee;
-                        return user;
-                    });
+                    await refundDeductedBalance();
                     showLoader(false);
-                    return showToast("Selected slot(s) already taken! Balance refunded.", "error");
+                    return showToast("You already joined this match! Balance refunded.", "error");
                 }
 
+                // 4. Post-write slot collision guard for simultaneous bookings
+                const postSnap = await get(ref(db, `tournaments/${tid}/registeredPlayers`));
+                if (postSnap.exists()) {
+                    const allReg = postSnap.val();
+                    let conflictFound = false;
+                    for (const [otherUid, otherData] of Object.entries(allReg)) {
+                        if (otherUid === currentUser.uid || !otherData) continue;
+                        const otherSlots = Array.isArray(otherData.slots) ? otherData.slots.map(String) : (otherData.slot ? [String(otherData.slot)] : []);
+                        const overlaps = selectedSlots.some(s => otherSlots.includes(String(s)));
+                        if (overlaps) {
+                            const otherTs = Number(otherData.timestamp) || 0;
+                            if (otherTs < myJoinTimestamp || (otherTs === myJoinTimestamp && otherUid < currentUser.uid)) {
+                                conflictFound = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (conflictFound) {
+                        await set(rpUserRef, null);
+                        await refundDeductedBalance();
+                        showLoader(false);
+                        return showToast("Selected slot(s) already taken! Balance refunded.", "error");
+                    }
+                }
+
+                // 5. Mark tournament joined in user profile
                 await update(ref(db, `users/${currentUser.uid}/joinedTournaments/${tid}`), { timestamp: serverTimestamp() });
                 
-                await push(ref(db, `users/${currentUser.uid}/notifications`), {
-                    title: "Match Joined Successfully",
-                    message: `You successfully booked slot(s) [${selectedSlots.join(', ')}] in ${tDat.name}. Entry Fee: ${window.FMT_C(totalFee)}.`,
-                    type: "success",
-                    read: false,
-                    timestamp: serverTimestamp()
-                });
+                // 6. Push confirmation notification (non-blocking if fails)
+                try {
+                    await push(ref(db, `users/${currentUser.uid}/notifications`), {
+                        title: "Match Joined Successfully",
+                        message: `You successfully booked slot(s) [${selectedSlots.join(', ')}] in ${tDat.name}. Entry Fee: ${window.FMT_C(totalFee)}.`,
+                        type: "success",
+                        read: false,
+                        timestamp: serverTimestamp()
+                    });
+                } catch(notifErr) { console.warn("Notification skipped:", notifErr); }
 
-                modals.join.hide(); showToast("Joined Match Successfully!", "success"); showSection('home-section');
-            } catch(e) { showToast(e.message, "error"); } finally { showLoader(false); }
+                modals.join.hide();
+                showToast("Joined Match Successfully!", "success");
+                showSection('home-section');
+            } catch(e) {
+                await refundDeductedBalance();
+                showToast(e.message || "Failed to join match", "error");
+            } finally {
+                showLoader(false);
+            }
         };
 
         // ================= RECHARGE / ADVANCED WITHDRAWAL =================
@@ -2158,7 +2284,8 @@
 
         getEl('proceedToPayActionBtn').onclick = () => {
             const typeEl = document.querySelector('input[name="payType"]:checked');
-            const type = typeEl ? typeEl.value : 'manual';
+            if(!typeEl) return showToast('Please select a payment mode', 'error');
+            const type = typeEl.value;
             if(type === 'auto') {
                 const zkey = appSettings.payment?.zap_key;
                 if(!appSettings.payment?.gateway_enabled || !zkey || typeof ZapUPI === 'undefined') return showToast('Gateway disabled. Use Manual.', 'error');
@@ -2175,8 +2302,8 @@
         };
 
         getEl('rechargeSubmitBtn').onclick = async () => {
-            const utr = getEl('rechargeUtrInput').value; if(!utr) return showToast("Enter UTR", "error");
-            showLoader(true); try { await push(ref(db, 'deposits'), { userId: currentUser.uid, amount: finalRechargeAmt, utr: utr, status: 'pending', paymentMethod: 'Manual UPI', timestamp: serverTimestamp() }); showToast("Deposit Requested", "success"); showSection('wallet-section'); } catch(e) {} showLoader(false);
+            const utr = getEl('rechargeUtrInput').value.trim(); if(!utr) return showToast("Enter UTR", "error");
+            showLoader(true); try { await push(ref(db, 'deposits'), { userId: currentUser.uid, amount: finalRechargeAmt, utr: utr, status: 'pending', paymentMethod: 'Manual UPI', timestamp: serverTimestamp() }); showToast("Deposit Requested", "success"); getEl('rechargeUtrInput').value = ''; showSection('wallet-section'); } catch(e) { showToast(e.message || "Request failed", "error"); } showLoader(false);
         };
 
         getEl('checkZapStatusBtn').onclick = () => {
@@ -2208,7 +2335,7 @@
 
             if (wdType === 'money') {
                 const amt = parseFloat(getEl('withdrawAmountInputEl').value);
-                const det = getEl('withdrawMethodInputEl').value;
+                const det = getEl('withdrawMethodInputEl').value.trim();
                 if(!amt || amt < min) return showToast(`Min withdraw is ${min}`, 'error');
                 if(!det) return showToast('Enter Bank/UPI', 'error');
                 showLoader(true);
@@ -2248,9 +2375,9 @@
                 const st = t.registeredPlayers[currentUser.uid];
                 const gName = allGames[t.gameId]?.name || 'Game';
                 const mName = allModes[t.modeId]?.name || 'Mode';
-                const slotDisp = st.slots ? st.slots.join(', ') : (st.slot || 'N/A');
+                const slotDisp = Array.isArray(st.slots) ? st.slots.join(', ') : (st.slot || 'N/A');
                 let teamStr = '';
-                if(st.slots && st.slots.length > 0) { const match = String(st.slots[0]).match(/\d+/); if(match) teamStr = `<br><span class="small text-muted">Team No: <strong class="text-white">${match[0]}</strong></span>`; }
+                if(Array.isArray(st.slots) && st.slots.length > 0) { const match = String(st.slots[0]).match(/\d+/); if(match) teamStr = `<br><span class="small text-muted">Team No: <strong class="text-white">${match[0]}</strong></span>`; }
                 
                 let statusBadge = '';
                 const ms = st.matchStatus || 'playing';
@@ -2391,7 +2518,9 @@
                     let safeName = u.displayName || u.email?.split('@')[0] || 'Player';
                     list.innerHTML += `<div class="d-flex align-items-center justify-content-between p-3 border-bottom border-glass last-border-none"><div class="d-flex align-items-center gap-3"><h5 class="m-0 text-muted" style="width:30px;">${tr}</h5><img src="https://ui-avatars.com/api/?name=${encodeURIComponent(safeName)}&background=18181b&color=06b6d4&bold=true" style="width:40px;height:40px;border-radius:10px;"><h6 class="m-0 fw-bold text-main">${safeName}</h6></div><strong class="glow-text d-flex align-items-center" style="color:var(--accent-gold);">${window.FMT_C(u.leaderboardDisplayEarnings||0)}</strong></div>`; 
                 });
-            } catch(e) {}
+            } catch(e) {
+                list.innerHTML = '<p class="text-center text-muted py-3 fw-bold">Unable to load rankings.</p>';
+            }
         }
     </script>
 </body>
